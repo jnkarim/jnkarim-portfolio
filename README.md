@@ -1,7 +1,5 @@
 # Portfolio
 
-![Portfolio Screenshot](./public/screenshot.png) <!-- Add a screenshot if available -->
-
 A modern, responsive portfolio website built with React, Tailwind CSS, and React Router. Showcases my skills, projects, education, and achievements.
 
 ## Features
