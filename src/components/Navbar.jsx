@@ -24,7 +24,7 @@ const Navbar = () => {
 
                     <div className="flex gap-4 mt-4 md:mt-6">
                         <a
-                            href="www.linkedin.com/in/jnkarim"
+                            href="https://www.linkedin.com/in/jnkarim/"
                             target="_blank"
                             rel="noopener noreferrer"
                             className="text-gray-400 hover:text-yellow-400 transition-colors"
