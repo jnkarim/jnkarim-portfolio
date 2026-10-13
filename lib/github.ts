@@ -1,4 +1,3 @@
-
 import { featuredProjects, type Project } from "./data";
 
 const username = "jnkarim";
@@ -34,17 +33,13 @@ const deployHosts = [
   "replit.app",
 ];
 
-function normalizeSite(
-  value: string | null | undefined
-): string | null {
+function normalizeSite(value: string | null | undefined): string | null {
   if (!value?.trim()) return null;
 
   try {
     const raw = value.trim();
 
-    const url = new URL(
-      /^https?:\/\//i.test(raw) ? raw : `https://${raw}`
-    );
+    const url = new URL(/^https?:\/\//i.test(raw) ? raw : `https://${raw}`);
 
     if (!["http:", "https:"].includes(url.protocol)) {
       return null;
@@ -110,18 +105,12 @@ function visibleFeaturedProjects(): Project[] {
   return featuredProjects
     .filter(
       (project) =>
-        ![
-          project.id,
-          project.name,
-          project.sourceRepo ?? "",
-        ].some(isExcludedRepoName)
+        ![project.id, project.name, project.sourceRepo ?? ""].some(
+          isExcludedRepoName,
+        ),
     )
     .map((project) => {
-      const imageKey = [
-        project.sourceRepo,
-        project.id,
-        project.name,
-      ]
+      const imageKey = [project.sourceRepo, project.id, project.name]
         .filter((value): value is string => Boolean(value))
         .map(normalizeName)
         .find((key) => repoCovers[key]);
@@ -140,8 +129,7 @@ function isKnownDeployHost(link: string): boolean {
     const host = new URL(link).hostname.toLowerCase();
 
     return deployHosts.some(
-      (suffix) =>
-        host === suffix || host.endsWith(`.${suffix}`)
+      (suffix) => host === suffix || host.endsWith(`.${suffix}`),
     );
   } catch {
     return false;
@@ -157,7 +145,7 @@ function liveUrlFromReadme(text: string): string | null {
   for (const line of text.split(/\r?\n/)) {
     if (
       /\b(localhost|your-project|your-app|example\.com|template|placeholder)\b/i.test(
-        line
+        line,
       )
     ) {
       continue;
@@ -165,21 +153,18 @@ function liveUrlFromReadme(text: string): string | null {
 
     const goodContext =
       /\b(live|demo|deployed|visit site|website|try it|frontend|preview)\b/i.test(
-        line
+        line,
       );
 
     const badContext =
       /\b(backend|api endpoint|documentation|docs|tutorial|badge|deploy to|how to deploy)\b/i.test(
-        line
+        line,
       );
 
-    const matches =
-      line.match(/https?:\/\/[^\s<>"'`\])}]+/gi) ?? [];
+    const matches = line.match(/https?:\/\/[^\s<>"'`\])}]+/gi) ?? [];
 
     for (const value of matches) {
-      const candidate = normalizeSite(
-        value.replace(/[.,;:]+$/, "")
-      );
+      const candidate = normalizeSite(value.replace(/[.,;:]+$/, ""));
 
       if (!candidate) continue;
 
@@ -188,9 +173,7 @@ function liveUrlFromReadme(text: string): string | null {
       if (!recognized && !goodContext) continue;
 
       const score =
-        (goodContext ? 5 : 0) +
-        (recognized ? 2 : 0) -
-        (badContext ? 8 : 0);
+        (goodContext ? 5 : 0) + (recognized ? 2 : 0) - (badContext ? 8 : 0);
 
       if (score > 0) {
         candidates.push({
@@ -206,10 +189,7 @@ function liveUrlFromReadme(text: string): string | null {
   return candidates[0]?.url ?? null;
 }
 
-async function getRepoWebsite(
-  repo: GitHubRepo
-): Promise<string | null> {
-
+async function getRepoWebsite(repo: GitHubRepo): Promise<string | null> {
   // CampusGrid live deployment
   if (normalizeName(repo.name) === "campusgrid") {
     return "https://campusgrid-git-feat-landing-page-jnkarims-projects.vercel.app/";
@@ -219,14 +199,11 @@ async function getRepoWebsite(
 
   if (homepage) return homepage;
 
-  // Rest of your existing code...
+  return null;
 }
 
 // Convert GitHub repository into a project card.
-function dynamicCard(
-  repo: GitHubRepo,
-  demo: string
-): Project {
+function dynamicCard(repo: GitHubRepo, demo: string): Project {
   const normalizedRepo = normalizeName(repo.name);
 
   return {
@@ -244,13 +221,8 @@ function dynamicCard(
       repo.description?.trim() ||
       "A publicly deployed project from my GitHub repositories.",
 
-    stack: [
-      repo.language,
-      ...(repo.topics ?? []),
-    ]
-      .filter(
-        (value): value is string => Boolean(value)
-      )
+    stack: [repo.language, ...(repo.topics ?? [])]
+      .filter((value): value is string => Boolean(value))
       .slice(0, 6),
 
     points: [],
@@ -280,8 +252,7 @@ export async function getPortfolioProjects(): Promise<Project[]> {
     };
 
     if (process.env.GITHUB_TOKEN) {
-      headers.Authorization =
-        `Bearer ${process.env.GITHUB_TOKEN}`;
+      headers.Authorization = `Bearer ${process.env.GITHUB_TOKEN}`;
     }
 
     const response = await fetch(
@@ -292,7 +263,7 @@ export async function getPortfolioProjects(): Promise<Project[]> {
           revalidate: refreshSeconds,
         },
         signal: AbortSignal.timeout(6500),
-      }
+      },
     );
 
     if (!response.ok) {
@@ -305,23 +276,20 @@ export async function getPortfolioProjects(): Promise<Project[]> {
       return visibleFeatured;
     }
 
-    repos = result.filter(
-      (item): item is GitHubRepo =>
-        Boolean(
-          item &&
-          typeof item === "object" &&
-          typeof item.name === "string" &&
-          typeof item.html_url === "string"
-        )
+    repos = result.filter((item): item is GitHubRepo =>
+      Boolean(
+        item &&
+        typeof item === "object" &&
+        typeof item.name === "string" &&
+        typeof item.html_url === "string",
+      ),
     );
   } catch {
     return visibleFeatured;
   }
 
   // Exclude unwanted GitHub repositories.
-  const allowedRepos = repos.filter(
-    (repo) => !isExcludedRepoName(repo.name)
-  );
+  const allowedRepos = repos.filter((repo) => !isExcludedRepoName(repo.name));
 
   const found = await Promise.all(
     allowedRepos.map(async (repo) => ({
@@ -333,7 +301,7 @@ export async function getPortfolioProjects(): Promise<Project[]> {
             ? `https://${username}.github.io/${repo.name}/`
             : null)
         : await getRepoWebsite(repo),
-    }))
+    })),
   );
 
   const projects = visibleFeatured.map((project) => ({
@@ -345,15 +313,15 @@ export async function getPortfolioProjects(): Promise<Project[]> {
     projects.flatMap((project) => [
       normalizeName(project.id),
       normalizeName(project.sourceRepo ?? ""),
-    ])
+    ]),
   );
 
   const knownWebsites = new Set(
     projects.flatMap((project) =>
       project.links
         .filter((link) => link.label === "Live Demo")
-        .map((link) => sameUrl(link.href))
-    )
+        .map((link) => sameUrl(link.href)),
+    ),
   );
 
   for (const { repo, demo } of found) {
@@ -363,15 +331,12 @@ export async function getPortfolioProjects(): Promise<Project[]> {
 
     const index = projects.findIndex(
       (project) =>
-        normalizeName(project.id) ===
-          normalizeName(repo.name) ||
-        normalizeName(project.sourceRepo ?? "") ===
-          normalizeName(repo.name) ||
+        normalizeName(project.id) === normalizeName(repo.name) ||
+        normalizeName(project.sourceRepo ?? "") === normalizeName(repo.name) ||
         project.links.some(
           (link) =>
-            link.label === "Live Demo" &&
-            sameUrl(link.href) === sameUrl(demo)
-        )
+            link.label === "Live Demo" && sameUrl(link.href) === sameUrl(demo),
+        ),
     );
 
     if (index >= 0) {
@@ -381,9 +346,7 @@ export async function getPortfolioProjects(): Promise<Project[]> {
         ...existing,
 
         links: [
-          ...existing.links.filter(
-            (link) => link.label !== "GitHub"
-          ),
+          ...existing.links.filter((link) => link.label !== "GitHub"),
           {
             label: "GitHub",
             href: repo.html_url,
@@ -396,10 +359,7 @@ export async function getPortfolioProjects(): Promise<Project[]> {
 
     const repoName = normalizeName(repo.name);
 
-    if (
-      knownNames.has(repoName) ||
-      knownWebsites.has(sameUrl(demo))
-    ) {
+    if (knownNames.has(repoName) || knownWebsites.has(sameUrl(demo))) {
       continue;
     }
 
